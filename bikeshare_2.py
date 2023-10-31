@@ -60,20 +60,31 @@ def load_data(city, month, day):
         df - Pandas DataFrame containing city data filtered by month and day
     """
 
-    # load data file into a dataframe
+    # load data file into a dataframe and filter by month and day if applicable
+    print(" running def load_data")
     df = pd.read_csv(CITY_DATA[city])
 
+    # convert the Start Time column to datetime
+    df['Start Time'] = pd.to_datetime(df['Start Time'])
+
+    # # extract month and day of week from Start Time to create new columns
+    df['month'] = df['Start Time'].dt.month
+    df['day_of_week'] = df['Start Time'].dt.day_name() 
+
+    # filter by month if applicable
     if month != 'all':
-        # convert the Start Time column to datetime
-        df['Start Time'] = pd.to_datetime(df['Start Time'])
+        # # use the index of the months list to get the corresponding int
+        months = ['January', 'February', 'March', 'April', 'May', 'June']
+        month = months.index(month.title()) + 1
 
-        # extract month and day of week from Start Time to create new columns
-        df['month'] = df['Start Time'].dt.month
-        df['day_of_week'] = df['Start Time'].dt.day_name()
-
-        # filter by month to create the new dataframe
-        df = df[df['month'] == month.title()]
+        # # filter by month to create the new dataframe
+        df = df[df['month'] == month]
     
+    # filter by day of week if applicable
+    if day != 'all':
+        # # filter by day of week to create the new dataframe
+        df = df[df['day_of_week'] == day.title()]
+
     return df
 
 
@@ -83,29 +94,22 @@ def time_stats(df):
     print('\nCalculating The Most Frequent Times of Travel...\n')
     start_time = time.time()
 
-    # display the most common month
-    if 'month' in df.columns:
-        most_common_month = df['month'].mode()[0]
-    else:
-        most_common_month = 'N/A'
-    print("The most common month is: ", most_common_month)
+    print(" running def time_stats")
 
+    # display the most common month
+    most_common_month = df['month'].mode()[0]
+
+    print("The most common start month is: ", most_common_month)
 
     # display the most common day of week
-    if 'day' in df.columns:
-        most_common_day = df['day'].mode()[0]
-    else:
-        most_common_day = 'N/A'
-    print("The most common day is: ", most_common_day)
+    most_common_weekday = df['day_of_week'].mode()[0]
+    print("The most common start day is: ", most_common_weekday)
 
     # display the most common start hour
-    if 'hour' in df.columns:
-        most_common_start_hour = df['hour'].mode()[0]
-    else:
-        most_common_start_hour = 'N/A'
-    print("The most common start hour is: ", most_common_start_hour)
+    most_common_hour = df['Start Time'].dt.hour.mode()[0]
 
-    print("\nThis took %s seconds." % (time.time() - start_time))
+    print("The most common start hour is: ", most_common_hour)
+
     print('-'*40)
 
 
@@ -168,12 +172,39 @@ def user_stats(df):
 
 
     # Display earliest, most recent, and most common year of birth
-    earliest_year_of_birth = df['Birth Year'].min()
-    print("The earliest year of birth is: ", earliest_year_of_birth)
+    if 'Birth Year' in df.columns:
+        earliest_year_of_birth = df['Birth Year'].min()
+        print("The earliest year of birth is: ", earliest_year_of_birth)
+        most_recent_year_of_birth = df['Birth Year'].max()
+        print("The most recent year of birth is: ", most_recent_year_of_birth)
+        most_common_year_of_birth = df['Birth Year'].mode()[0]
+        print("The most common year of birth is: ", most_common_year_of_birth)
+    else:
+        print('Birth Year data is not available for this city.')
 
     print("\nThis took %s seconds." % (time.time() - start_time))
     print('-'*40)
 
+
+def display_data(df):
+    """Displays 5 lines of raw data if the user wants to see it."""
+
+    print('\nCalculating User Stats...\n')
+    start_time = time.time()
+
+    # Display 5 lines of raw data if the user wants to see it
+    print("Would you like to see 5 lines of raw data? Enter yes or no.")
+    display_data = input().lower()
+    while display_data not in ['yes', 'no']:
+        print("Invalid input. Please try again.")
+        display_data = input().lower()
+    if display_data == 'yes':
+        print(df.head(5))
+    else:
+        print("You have chosen not to see the raw data.")
+
+    print("\nThis took %s seconds." % (time.time() - start_time))
+    print('-'*40)
 
 def main():
     while True:
